@@ -34,7 +34,7 @@ def style_base_layout():
                     .stDeployButton {display: none;}
                     header {visibility: hidden;}
                     footer {visibility: hidden;}
-                    .block-container{
+                    # .block-container{
                         padding-top: 1.5rem !important;
                     }
                     h1{
