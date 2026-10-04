@@ -45,7 +45,7 @@ def get_trained_model():
             X.append(np.array(embedding))
             y.append(student.get('student_id'))
 
-    if len(X):
+    if not X:
         return None
     clf=SVC(kernel='linear',probability=True,class_weight='balanced')
 
@@ -62,40 +62,39 @@ def train_classifier():
 
 
 def predict_attendance(class_image_np):
-    encodings=get_face_embeddings(class_image_np)
+    encodings = get_face_embeddings(class_image_np)
 
-    detected_stduent={}
+    detected_student = {}
 
-
-    model_data=get_trained_model()
+    model_data = get_trained_model()
 
     if not model_data:
-        return detected_stduent,[],len(encodings)
+        return detected_student, [], len(encodings)
 
+    X_train = model_data['X']
+    y_train = model_data['y']
 
-    clf=model_data['clf']
-    X_train=model_data['X']
-    y_train=model_data['y']
-
-    all_students=sorted(list(set(y_train)))
-
+    all_students = sorted(list(set(y_train)))
 
     for encoding in encodings:
-        if len(all_students)>=2:
-            predicted_id=int(clf.predict([encoding])[0])
-        else:
-            predicted_id=int(all_students[0])
 
-        student_embedding=X_train[y_train.index(predicted_id)]
+        # Find the closest registered face
+        distances = [
+            np.linalg.norm(train_embedding - encoding)
+            for train_embedding in X_train
+        ]
 
-        best_match_score=np.linalg.norm(student_embedding-encoding)
+        best_index = np.argmin(distances)
+        best_match_score = distances[best_index]
 
-        resemblance_threshold=0.6
+        predicted_id = y_train[best_index]
 
-        if best_match_score<=resemblance_threshold:
-            detected_stduent[predicted_id]=True
+        # Face recognition threshold
+        resemblance_threshold = 0.45
 
-    return detected_stduent,all_students,len(encoding)
+        if best_match_score <= resemblance_threshold:
+            detected_student[int(predicted_id)] = True
 
+    return detected_student, all_students, len(encodings)
 
 
